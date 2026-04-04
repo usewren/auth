@@ -1,0 +1,19 @@
+{
+  "name": "auth",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@types/pg": "^8.20.0",
+    "better-auth": "^1.5.6",
+    "kysely": "^0.28.15",
+    "pg": "^8.20.0",
+    "postgres": "^3.4.8"
+  }
+}
