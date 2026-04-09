@@ -9,14 +9,20 @@ const pool = new pg.Pool({
 
 const db = new Kysely({ dialect: new PostgresDialect({ pool }), plugins: [new CamelCasePlugin()] });
 
-const trustedOrigins = process.env.BETTER_AUTH_TRUSTED_ORIGINS
+const trustedOriginsFromEnv = process.env.BETTER_AUTH_TRUSTED_ORIGINS
   ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",").map(s => s.trim())
   : [];
 
 export const auth = betterAuth({
   database: kyselyAdapter(db, { type: "postgres" }),
   baseURL: process.env.BETTER_AUTH_URL,
-  trustedOrigins,
+  // Trust env-configured origins + same-site requests (Origin host matches Host header)
+  trustedOrigins: (request) => {
+    const origin = request.headers.get("origin");
+    const host = request.headers.get("host");
+    const samesite = origin && host ? (() => { try { return new URL(origin).host === host; } catch { return false; } })() : false;
+    return samesite ? [origin!] : trustedOriginsFromEnv;
+  },
 
   emailAndPassword: {
     enabled: true,
