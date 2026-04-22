@@ -1,15 +1,16 @@
-# auth
+# WREN Auth
 
-To install dependencies:
+Authentication configuration for [WREN](https://wren.aemwip.com), built on [Better Auth](https://www.better-auth.com/).
 
-```bash
-bun install
-```
+Handles email/password sign-up and sign-in, session cookies, and the Kysely database adapter for Postgres.
 
-To run:
+## Links
 
-```bash
-bun run index.ts
-```
+- **Website:** https://wren.aemwip.com
+- **All repos:** [github.com/usewren](https://github.com/usewren)
+- **Tutorial:** https://wren.aemwip.com/tutorial
+- **API Docs:** https://wren.aemwip.com/docs
 
-This project was created using `bun init` in bun v1.3.11. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+## License
+
+Apache-2.0
