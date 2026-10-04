@@ -2,6 +2,9 @@ import { betterAuth } from "better-auth";
 import { kyselyAdapter } from "@better-auth/kysely-adapter";
 import { Kysely, PostgresDialect, CamelCasePlugin } from "kysely";
 import pg from "pg";
+import { sendMail, verificationMail, resetPasswordMail } from "./mailer";
+
+export { sendMail, inviteMail, mailDelivers, mailTransport } from "./mailer";
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL ?? "postgres://wren:wren@localhost:5432/wren",
@@ -16,6 +19,7 @@ function cleanEnv(key: string): string | undefined {
 }
 
 const baseURL = cleanEnv("BETTER_AUTH_URL") || cleanEnv("WREN_URL");
+export const requireVerification = cleanEnv("REQUIRE_EMAIL_VERIFICATION") === "true";
 
 // Trusted origins callback — derives allowed origins from the request's Host
 // header at runtime. This handles Cloudflare Tunnel (and any reverse proxy)
@@ -35,6 +39,23 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
+    // REQUIRE_EMAIL_VERIFICATION=true: email/password accounts must confirm before
+    // signing in. Default (false): the confirmation is sent and recorded, nobody is blocked.
+    requireEmailVerification: requireVerification,
+    sendResetPassword: async ({ user, url }) => {
+      await sendMail(resetPasswordMail(user.email, user.name, url));
+    },
+  },
+
+  emailVerification: {
+    sendOnSignUp: true,
+    // When confirmation is required, a sign-in attempt by an unconfirmed user sends a
+    // fresh link, so nobody is locked out for good if the first email was lost.
+    sendOnSignIn: requireVerification,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendMail(verificationMail(user.email, user.name, url));
+    },
   },
 
   socialProviders: {
