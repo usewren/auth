@@ -3,8 +3,10 @@ import { kyselyAdapter } from "@better-auth/kysely-adapter";
 import { Kysely, PostgresDialect, CamelCasePlugin } from "kysely";
 import pg from "pg";
 import { sendMail, verificationMail, resetPasswordMail } from "./mailer";
+import { mcp } from "better-auth/plugins";
 
 export { sendMail, inviteMail, mailDelivers, mailTransport } from "./mailer";
+export { oAuthDiscoveryMetadata } from "better-auth/plugins";
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL ?? "postgres://wren:wren@localhost:5432/wren",
@@ -78,6 +80,26 @@ export const auth = betterAuth({
       },
     } : {}),
   },
+
+  // "Sign in with WREN" for MCP clients (Claude, Cursor, …): OAuth 2.1 with dynamic
+  // client registration and PKCE. Authorize/token/register live under /api/auth/mcp/*.
+  // The server forces the consent page on every authorization (an auto-approved
+  // dynamically registered client could otherwise obtain a user's token) and the
+  // consent page is where the user picks the org the connection acts in.
+  plugins: [
+    mcp({
+      loginPage: "/login",
+      oidcConfig: {
+        loginPage: "/login",
+        consentPage: "/mcp/consent",
+        requirePKCE: true,
+        allowPlainCodeChallengeMethod: false,
+        allowDynamicClientRegistration: true,
+        accessTokenExpiresIn: 60 * 60,            // 1 hour
+        refreshTokenExpiresIn: 60 * 60 * 24 * 30, // 30 days
+      },
+    }),
+  ],
 
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
